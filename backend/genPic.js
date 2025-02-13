@@ -1,5 +1,4 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import { createCanvas, registerFont } from 'canvas';
 import Web3 from 'web3';
 import dotenv from 'dotenv';
@@ -32,22 +31,6 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 // 智能合約地址和 ABI
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const contract = new ethers.Contract(contractAddress, abi, wallet);
-
-// MongoDB 模型
-const certificateSchema = new mongoose.Schema({
-  storeName: { type: String, required: true },
-  productName: { type: String, required: true },
-  productDescription: { type: String, required: true },
-  productSerial: { type: String, required: true, unique: true },
-  productionDate: { type: String, required: true },
-  ipfsCID: { type: String, required: true },
-  ipfsLink: { type: String, required: true },
-  blockchainTransactionHash: { type: String, required: true },
-  status: { type: String, default: 'success' }, // pending
-  //timestamp: { type: Number, required: true },
-});
-
-const Certificate = mongoose.model('Certificate', certificateSchema);
 
 //交易手續費
 const fee = 0.001;
@@ -104,7 +87,6 @@ router.post('/generate-certificate', async (req, res) => {
           productDescription,
           productSerial,
           productionDate,
-          //transactionHash,
           userAddress // 新增用戶地址來驗證交易
         } = req.body;
 

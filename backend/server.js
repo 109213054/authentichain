@@ -2,7 +2,6 @@ import express from 'express';
 import { config } from 'dotenv';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { connect } from 'mongoose';
 import genPicRoutes from './genPic.js'; // 使用 ESM 模組導入
 import checkProductSerial from './genPic.js';
 import verifyPayment from './genPic.js';
@@ -32,21 +31,10 @@ app.use('/api', checkProductSerial);
 app.use('/api', verifyPayment);
 app.use('/api', storeCertificate);
 
-// MongoDB 連線
-const connectDB = async () => {
-  try {
-    await connect(process.env.MONGO_URI);
-    console.log('MongoDB 已成功連線');
-  } catch (error) {
-    console.error('MongoDB 連線失敗:', error.message);
-    process.exit(1);
-  }
-};
 
 // 啟動服務
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`服務正在執行於 http://localhost:${PORT}`);
-  connectDB(); // 啟動時連線資料庫
 });

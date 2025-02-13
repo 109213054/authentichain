@@ -17,8 +17,7 @@ const ProducerHomepage = () => {
   const [link, setLink] = useState('');
   const [web3, setWeb3] = useState(null);
   const [address, setAddress] = useState('');
-  const [maticPrice, setMaticPrice] = useState(1);
-  const [selectedCurrency, setSelectedCurrency] = useState("USD"); // 🟢 新增狀態：用戶選擇的貨幣
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const fee = 0.001;
   
   const ORACLE_ABI = [
@@ -51,10 +50,6 @@ const ProducerHomepage = () => {
     } else {
       setMessage("請安裝 MetaMask 錢包！");
     }
-  };
-
-  const handleCurrencyChange = (e) => { 
-    setSelectedCurrency(e.target.value); // 設定用戶選擇的貨幣
   };
 
   const handleChange = (e) => {
