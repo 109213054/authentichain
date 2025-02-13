@@ -124,7 +124,7 @@ const ProducerHomepage = () => {
 
 
     try {
-        const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS; //付款合約
+        const contractAddress = process.env.REACT_APP_PAYMONEY_ADDRESS; //付款合約
         if (!contractAddress) {
           setMessage('合約地址未設定，請聯繫開發人員！');
           return;
@@ -142,7 +142,7 @@ const ProducerHomepage = () => {
         ];
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const contract = new ethers.Contract(process.env.REACT_APP_CONTRACT_ADDRESS, abi, signer);
+        const contract = new ethers.Contract(process.env.REACT_APP_PAYMONEY_ADDRESS, abi, signer);
         
         
   
@@ -165,44 +165,58 @@ const ProducerHomepage = () => {
             setMessage('交易驗證失敗: ' + verifyResponse.data.message);
             return;
         }
-  
+
         setMessage('交易驗證成功，正在生成證書...');
-        // 簽名的內容
-        const payload = {
-          ...formData,
-          storeAddress: address,
-          timestamp: Math.floor(Date.now() / 1000),
-        };
-
-        console.log('payload:',payload);
-  
-        // 使用用戶地址進行數位簽名
-        const signature = await web3.eth.personal.sign(
-          JSON.stringify(payload),
-          address,
-          ''
-        );
-
-        console.log("🚀 發送 /generate-certificate API 請求...");
   
         // 傳遞到後端
         const response = await axios.post('http://localhost:5000/api/generate-certificate', {
-          ...payload,
-          signature,
-          transactionHash: tx.hash, //交易哈希
+          ...formData,
+          //signature,
+          //transactionHash: tx.hash, //交易哈希
           userAddress: address, //新增使用者地址
         });
 
-        console.log("✅ /generate-certificate 回應:", response.data);
+        if (!response.data.ipfsCID) {
+          setMessage('IPFS 上傳失敗');
+          return;
+        }
+
+        const ipfsCID = response.data.ipfsCID;
+        console.log("✅ IPFS CID:", ipfsCID);
+
+        // 生成 Hash
+        const hashData = `${formData.storeName}|${formData.productName}|${formData.productDescription}|${formData.productSerial}|${formData.productionDate}|${ipfsCID}`;
+        //const hash = keccak256(toUtf8Bytes(hashData));
+        const hash = ethers.hashMessage(hashData);
+        console.log("生成的 Hash值:", hash);
+
+        // 🟢 用戶簽名
+        setMessage('請使用 MetaMask 簽署證書...');
+        const signature = await signer.signMessage(hash);
+        console.log("✅ 用戶簽名:", signature);
+
+        setMessage('正在將證書存入區塊鏈...');
+
+        const storeResponse = await axios.post('http://localhost:5000/api/store-certificate', {
+          ...formData,
+          ipfsCID,
+          hash,
+          signature,
+          userAddress: address,
+
+      });
+
+      setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse}`);
+      setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse.transactionHash}`);
   
-        if (response.data.ipfsLink) {
-          setMessage(`證書生成成功！下載連結: ${response.data.ipfsLink}`);
+        if (storeResponse.data.transactionHash) {
+          setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse.data.transactionHash}`);
         } else {
-          setMessage('生成證書成功，但無法取得下載連結。');
+          setMessage('證書存入區塊鏈失敗');
         }
     } catch (error) {
-      console.error('生成證書失敗', error);
-      setMessage('生成證書失敗，錯誤: ${error.message}');
+      console.error('失敗', error);
+      setMessage('失敗了');
     }
   };
 

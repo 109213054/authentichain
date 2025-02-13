@@ -6,6 +6,7 @@ import { connect } from 'mongoose';
 import genPicRoutes from './genPic.js'; // 使用 ESM 模組導入
 import verifyCertificate from './genPic.js';
 import verifyPayment from './genPic.js';
+import storeCertificate from './genPic.js';
 
 // 初始化環境變數
 config();
@@ -29,6 +30,7 @@ app.use('/api', genPicRoutes);
 app.use('/api', verifyCertificate);
 //paymoney
 app.use('/api', verifyPayment);
+app.use('/api', storeCertificate);
 
 // MongoDB 連線
 const connectDB = async () => {

@@ -96,7 +96,7 @@ async function generateCertificateImage(data) {
 
 // 定義路由
 router.post('/generate-certificate', async (req, res) => {
-    console.log("🔵 1. 收到 /generate-certificate API 請求");
+    console.log("收到 /generate-certificate API 請求");
     try {
         const {
           storeName,
@@ -104,13 +104,12 @@ router.post('/generate-certificate', async (req, res) => {
           productDescription,
           productSerial,
           productionDate,
-          transactionHash,
-          //userAddress // 新增用戶地址來驗證交易
+          //transactionHash,
+          userAddress // 新增用戶地址來驗證交易
         } = req.body;
 
-        console.log("🔵 2. storeName:", storeName);
-        console.log("🔵 3. productName:", productName);
-        console.log("🔵 4. transactionHash:", transactionHash);
+        console.log("storeName:", storeName);
+        console.log("productName:", productName);
     
     
         //生成圖片
@@ -164,15 +163,66 @@ router.post('/generate-certificate', async (req, res) => {
           console.log("Public IPFS Link:", ipfsLink);
         } catch (error) {
           console.error("IPFS upload error:", error);
+          return res.status(500).json({ message: 'IPFS 上傳失敗' });
         }
 
+        // 送 `CID` 給前端，讓用戶簽名
+        res.status(200).json({
+          message: 'IPFS 上傳成功，請使用者簽名',
+          ipfsCID,
+          ipfsLink,
+          userAddress // ✅ 加上 userAddress，後端 `store-certificate` 需要用這個來驗證
+        });
+        
+      } catch (error) {
+        console.error("❌ 生成證書錯誤:", error);
+        res.status(500).json({ message: '生成證書時發生錯誤' });
+    }
+});
+        
+router.post('/store-certificate', async (req, res) => {
+    try {
+        console.log(" 5. 收到 /store-certificate API 請求");
+        const { 
+          storeName, 
+          productName, 
+          productDescription, 
+          productSerial, 
+          productionDate, 
+          ipfsCID,
+          hash,
+          signature,
+          userAddress
+        } = req.body;
 
-        // 計算 SHA256 證書 Hash
-        /*
-        const hashInput = `${storeName}${productName}${productDescription}${productSerial}${productionDate}${ipfsCID}`;
-        const certificateHash = crypto.createHash('sha256').update(hashInput).digest('hex');
-        console.log('certificateHash:', certificateHash);*/
-    
+        const productionDateTimestamp = Math.floor(new Date(productionDate).getTime() / 1000);
+        console.log("🟢 轉換 productionDate:", productionDate, "➡", productionDateTimestamp);
+
+        console.log("🔍 驗證簽名...");
+        console.log('hash: ',hash);
+        const recoveredAddress = ethers.verifyMessage(hash, signature);
+        console.log("簽名者地址:", recoveredAddress);
+
+        if (recoveredAddress.toLowerCase() !== userAddress.toLowerCase()) {
+            return res.status(400).json({ message: '簽名驗證失敗，非授權店家' });
+        }
+        console.log("✅ 簽名驗證通過！");
+
+        console.log('storeName : ',storeName);
+
+        // **重新計算 hash 來驗證數據完整性**
+        const calculatedHash = ethers.hashMessage(`${storeName}|${productName}|${productDescription}|${productSerial}|${productionDate}|${ipfsCID}`);
+
+        console.log('calculatedHash: ',calculatedHash);
+
+        if (calculatedHash !== hash) {
+            return res.status(400).json({ message: '重新計算的 Hash 與用戶簽名的 Hash 不匹配，可能遭竄改' });
+        }
+        console.log("✅ Hash 驗證成功！");
+
+        // 設定證書狀態
+        const status = "success";
+        
         //存入區塊鏈
         const tx = await contract.addCertificate(
           storeName,
@@ -180,14 +230,18 @@ router.post('/generate-certificate', async (req, res) => {
           productDescription,
           productSerial,
           ipfsCID,
-          Math.floor(new Date(productionDate).getTime() / 1000), // 轉換為 UNIX 時間戳
-          'successful'
+          productionDateTimestamp,
+          status,
+          hash,
+          signature,
+          
         );
         await tx.wait(); // 等待交易完成
     
         const blockchainTransactionHash = tx.hash;
-        console.log('blockchainTransactionHash:',blockchainTransactionHash);
+        console.log('區塊鏈存證成功，blockchainTransactionHash:',blockchainTransactionHash);
         
+        /*
         //保存到MongoDB 
         const newCertificate = new Certificate({
           storeName,
@@ -201,19 +255,19 @@ router.post('/generate-certificate', async (req, res) => {
           //timestamp,
         });
         
-        await newCertificate.save();
+        await newCertificate.save();*/
         
     
         res.status(200).json({
-          message: '證書生成成功',
-          ipfsCID,
-          ipfsLink,
+          message: '證書儲存成功',
+          //ipfsCID,
+          //ipfsLink,
           blockchainTransactionHash,
         });
   
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: '生成證書時發生錯誤' });
+      res.status(500).json({ message: '儲存證書時發生錯誤' });
     }
 });
 
