@@ -111,7 +111,6 @@ router.post('/generate-certificate', async (req, res) => {
         console.log("storeName:", storeName);
         console.log("productName:", productName);
     
-    
         //生成圖片
         const imageBuffer = await generateCertificateImage({
           storeName,
@@ -159,7 +158,7 @@ router.post('/generate-certificate', async (req, res) => {
           console.log("IPFS CID:", ipfsCID);
         
           // 產生 Public IPFS 連結
-          ipfsLink = `https://ipfs.io/ipfs/${ipfsCID}`;
+          ipfsLink = `https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}`;
           console.log("Public IPFS Link:", ipfsLink);
         } catch (error) {
           console.error("IPFS upload error:", error);
@@ -240,30 +239,9 @@ router.post('/store-certificate', async (req, res) => {
     
         const blockchainTransactionHash = tx.hash;
         console.log('區塊鏈存證成功，blockchainTransactionHash:',blockchainTransactionHash);
-        
-        /*
-        //保存到MongoDB 
-        const newCertificate = new Certificate({
-          storeName,
-          productName,
-          productDescription,
-          productSerial,
-          productionDate,
-          ipfsCID,
-          ipfsLink,
-          blockchainTransactionHash, // 儲存交易哈希
-          //timestamp,
-        });
-        
-        await newCertificate.save();*/
-        
     
-        res.status(200).json({
-          message: '證書儲存成功',
-          //ipfsCID,
-          //ipfsLink,
-          blockchainTransactionHash,
-        });
+        return res.json({ success: true, message: '證書儲存成功', blockchainTransactionHash, });
+
   
     } catch (error) {
       console.error(error);
@@ -274,6 +252,8 @@ router.post('/store-certificate', async (req, res) => {
 
 router.post('/verify-payment', async (req, res) => {
   try {
+    
+
       const CONTRACT_ADDRESS = process.env.PAYMONEY_CONTRACT_ADDRESS;
       console.log('ContractAddress: ',CONTRACT_ADDRESS)
       const { transactionHash, userAddress } = req.body;
@@ -337,7 +317,34 @@ router.post('/verify-payment', async (req, res) => {
       console.error("❌ 付款驗證錯誤:", error);
       return res.status(500).json({ success: false, message: "伺服器錯誤，請稍後再試。" });
   }
+
 });
 
+router.post('/check-product-serial', async (req, res) => {
+    try {
+        const { productSerial } = req.body;
+        console.log(`🔍 查詢區塊鏈是否已有產品序號: ${productSerial}`);
+
+        const testSerial = "12345"; // 測試產品序號
+        const resultn = await contract.getCertificate(testSerial);
+        console.log("📌 測試 getCertificate 回傳值:", resultn);
+    
+        console.log("🔍 嘗試查詢區塊鏈...");
+        const result = await contract.getCertificate(productSerial);
+        console.log("✅ 區塊鏈返回:", result);
+
+        console.log(result[4]);
+        console.log(productSerial);
+
+        if (BigInt(result[4]) === BigInt(productSerial)) {
+          console.log(productSerial);
+          return res.json({ success: false, message: "該產品序號已存在，請使用其他序號！" });
+        }
+        return res.json({ success: true, message: "產品序號可用" });
+    } catch (error) {
+          console.error("❌ 區塊鏈查詢錯誤:", error);
+          return res.status(500).json({ success: false, message: "區塊鏈查詢失敗" });
+    }
+});
 
 export default router;

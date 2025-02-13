@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { connect } from 'mongoose';
 import genPicRoutes from './genPic.js'; // 使用 ESM 模組導入
-import verifyCertificate from './genPic.js';
+import checkProductSerial from './genPic.js';
 import verifyPayment from './genPic.js';
 import storeCertificate from './genPic.js';
 
@@ -26,8 +26,8 @@ app.get('/', (req, res) => {
 
 // 後端生成圖片
 app.use('/api', genPicRoutes);
-//驗證證書
-app.use('/api', verifyCertificate);
+//檢查產品序號有無重複
+app.use('/api', checkProductSerial);
 //paymoney
 app.use('/api', verifyPayment);
 app.use('/api', storeCertificate);

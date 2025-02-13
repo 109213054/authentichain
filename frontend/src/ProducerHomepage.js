@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Web3 from 'web3';
 import { ethers } from "ethers";
+import "./ProducerHomepage.css";
 
 const ProducerHomepage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const ProducerHomepage = () => {
   });
 
   const [message, setMessage] = useState('');
+  const [link, setLink] = useState('');
   const [web3, setWeb3] = useState(null);
   const [address, setAddress] = useState('');
   const [maticPrice, setMaticPrice] = useState(1);
@@ -80,7 +82,7 @@ const ProducerHomepage = () => {
           try {
             console.log(`🔍 currency: ${currency}, type: ${typeof currency}`);
             
-            const price=await oracle.getMaticPrice("USD");
+            const price=await oracle.getMaticPrice(currency);
               
               if (!price) {
                   console.error(`❌ MATIC/${currency} 返回 undefined`);
@@ -105,6 +107,7 @@ const ProducerHomepage = () => {
       console.error("❌ 獲取匯率失敗:", error);
     }
   };
+  
 
   // 提交表單，進行簽名並提交至後端
   const handleSubmit = async (e) => {
@@ -124,6 +127,18 @@ const ProducerHomepage = () => {
 
 
     try {
+
+        setMessage('正在檢查產品序號...');
+        
+        const searchResponse = await axios.post('http://localhost:5000/api/check-product-serial', {
+            productSerial: formData.productSerial
+        });
+  
+        if (!searchResponse.data.success) {
+            setMessage(searchResponse.data.message);
+            return;
+        }
+
         const contractAddress = process.env.REACT_APP_PAYMONEY_ADDRESS; //付款合約
         if (!contractAddress) {
           setMessage('合約地址未設定，請聯繫開發人員！');
@@ -149,7 +164,6 @@ const ProducerHomepage = () => {
   
         //  1. 發送支付交易
         setMessage('正在處理付款...');
-        //const tx = await contract.pay({ value: ethers.utils.parseEther("0.001") });
         const tx = await contract.pay({ value: ethers.parseEther("0.001") });
         await tx.wait(); // 等待交易確認
         setMessage(`交易成功！交易哈希: ${tx.hash}`);
@@ -206,12 +220,12 @@ const ProducerHomepage = () => {
 
       });
 
-      setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse}`);
-      setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse.transactionHash}`);
+      setLink(`證書存入區塊鏈成功！證書連結: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
+
+      console.log(storeResponse.data);
+      console.log(storeResponse.data.transactionHash);
   
-        if (storeResponse.data.transactionHash) {
-          setMessage(`證書存入區塊鏈成功！交易哈希: ${storeResponse.data.transactionHash}`);
-        } else {
+        if (!storeResponse.data.success) {
           setMessage('證書存入區塊鏈失敗');
         }
     } catch (error) {
@@ -223,83 +237,46 @@ const ProducerHomepage = () => {
 
 
 return (
-    <div>
-      <h1>店家證書生成入口</h1>
-      <button onClick={connectWallet}>連接錢包</button>
+  <div className="producer-homepage">  {/* ✅ 主容器 */}
+    
+      {/* 連接錢包按鈕 */}
+      <button onClick={connectWallet} className="connect-wallet">連接錢包</button>
+
       {address && <p>已連接地址: {address}</p>}
-       {/* 新增貨幣選擇下拉選單 */}
-       <div>
-        <label>選擇貨幣: </label>
-        <select value={selectedCurrency} onChange={handleCurrencyChange}>
-          <option value="USD">USD</option>
-          <option value="GBP">GBP</option>
-          <option value="JPY">JPY</option>
-        </select>
+      {/* MATIC 匯率資訊 */}
+      <h2 className="matic-info">📈 MATIC 匯率資訊</h2>
+          <p>每次生成證書需支付 0.001 MATIC</p>
+          {maticUsd !== null ? <p>💰 MATIC/USD: {maticUsd.toFixed(4)} USD</p> : <p>⏳ 加載 MATIC/USD 匯率...</p>}
+          {maticJpy !== null ? <p>💴 MATIC/JPY: {maticJpy.toFixed(4)} JPY</p> : <p>⏳ 加載 MATIC/JPY 匯率...</p>}
+          {maticGbp !== null ? <p>💷 MATIC/GBP: {maticGbp.toFixed(4)} GBP</p> : <p>⏳ 加載 MATIC/GBP 匯率...</p>}
+
+          {/* 表單 */}
+          <form onSubmit={handleSubmit}>
+              <label>店家名稱:</label>
+              <input id="storeName" name="storeName" className="input-field" value={formData.storeName} onChange={handleChange} required />
+
+              <label>產品名稱:</label>
+              <input id="productName" name="productName" className="input-field" value={formData.productName} onChange={handleChange} required />
+
+              <label>產品描述:</label>
+              <textarea id="productDescription" name="productDescription" className="input-field" value={formData.productDescription} onChange={handleChange} required />
+
+              <label>產品序號:</label>
+              <input id="productSerial" name="productSerial" className="input-field" value={formData.productSerial} onChange={handleChange} required />
+
+              <label>生產日期:</label>
+              <input id="productionDate" name="productionDate" type="date" className="input-field" value={formData.productionDate} onChange={handleChange} required />
+
+              {/* 付款按鈕 */}
+              <button type="submit" className="submit-btn">支付 0.001 MATIC 並生成證書</button>
+          </form>
+
+          {/* 顯示訊息 */}
+          {message && <p className="message">{message}</p>}
+
+          {/* 證書連結 */}
+          <div dangerouslySetInnerHTML={{ __html: link }} className="certificate-link" />
       </div>
-        <h1>📈 MATIC 匯率資訊</h1>
-        {maticUsd !== null ? <p>💰 MATIC/USD: {maticUsd.toFixed(4)} USD</p> : <p>⏳ 加載 MATIC/USD 匯率...</p>}
-        {maticJpy !== null ? <p>💴 MATIC/JPY: {maticJpy.toFixed(4)} JPY</p> : <p>⏳ 加載 MATIC/JPY 匯率...</p>}
-        {maticGbp !== null ? <p>💷 MATIC/GBP: {maticGbp.toFixed(4)} GBP</p> : <p>⏳ 加載 MATIC/GBP 匯率...</p>}
-        <form onSubmit={handleSubmit}>
-        <div>
-          <label>店家名稱:</label>
-          <input
-            type="text"
-            name="storeName"
-            value={formData.storeName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label>產品名稱:</label>
-          <input
-            type="text"
-            name="productName"
-            value={formData.productName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label>產品描述:</label>
-          <textarea
-            name="productDescription"
-            value={formData.productDescription}
-            onChange={handleChange}
-            required
-          ></textarea>
-        </div>
-
-        <div>
-          <label>產品序號:</label>
-          <input
-            type="text"
-            name="productSerial"
-            value={formData.productSerial}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label>生產日期:</label>
-          <input
-            type="date"
-            name="productionDate"
-            value={formData.productionDate}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <button type="submit">支付 {fee} MATIC 並生成證書</button>
-      </form>
-
-      {message && <p>{message}</p>}
-    </div>
 );
 };
 

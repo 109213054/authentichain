@@ -71,7 +71,8 @@
   font-size: 1rem;
 }
 
-.verify-btn, .search-btn {
+.verify-btn,
+.search-btn {
   width: 100%;
   padding: 1rem;
   border: none;
@@ -107,17 +108,63 @@
   font-size: 0.9rem;
 }
 
+/* 新增的 verification-result 樣式 */
+.verification-result {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-top: 2rem;
+  max-width: 600px;
+  width: 100%;
+  text-align: left;
+}
+
+.verification-result h3 {
+  color: #4285f4;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #4285f4;
+  padding-bottom: 0.5rem;
+}
+
+.verification-result p {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.verification-result strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.verification-result a {
+  color: #4285f4;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.verification-result a:hover {
+  color: #2c5bb8;
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 2rem;
   }
-  
+
   .subtitle {
     font-size: 1rem;
   }
-  
+
   .search-section {
     padding: 0 1rem;
+  }
+
+  .verification-result {
+    padding: 1.5rem;
   }
 }
 
