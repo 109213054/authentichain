@@ -22,7 +22,7 @@ module.exports = {
 
   etherscan: {
     apiKey: {
-      polygon:process.env.POLYGONSCAN_API_KEY, // 換成 Polygonscan API 金鑰
+      polygon:"BFQ6D51F6Q87EB8MXJ8AIARCQJ6AQNINED", // 換成 Polygonscan API 金鑰
     },
   },
 };

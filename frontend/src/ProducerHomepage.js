@@ -140,7 +140,9 @@ const ProducerHomepage = () => {
 
         setMessage('正在處理付款...');
         const tx = await PAYMONEY_CONTRACT.pay({ value: ethers.parseEther("0.001") });
+        console.log('zzzzzzzz');
         await tx.wait(); // 等待交易確認
+        console.log('確認');
   
         //  2. 發送交易哈希給後端進行驗證
         setMessage('正在驗證交易...');
