@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import axios from 'axios';
 import './app.css';
 import ProducerHomepage from './ProducerHomepage';
 import { ethers } from "ethers";
@@ -47,7 +46,7 @@ function App() {
           const [exists, status, storeName, productName, productDescription, ipfsCID, productionDate, storeAddress] = result;
     
           if (!exists) {
-              setErrorMessage("未找到證書");
+              setErrorMessage("無此證書");
               return;
           }
     
@@ -63,7 +62,7 @@ function App() {
               storeAddress,
               transactionHash: `https://polygonscan.com/address/${storeAddress}`
           });
-          setLink(`證書連結: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
+          setLink(`證書: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
     
       } catch (error) {
           console.error("查詢錯誤:", error);

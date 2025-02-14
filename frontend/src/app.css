@@ -5,6 +5,17 @@
   background: linear-gradient(to bottom, #f0f5ff 0%, #ffffff 100%);
 }
 
+/* 讓主要內容置中 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 水平置中 */
+  justify-content: center; /* 垂直置中 */
+  min-height: 80vh; /* 確保內容至少占滿視窗 */
+  text-align: center; /* 讓內部文字對齊 */
+}
+
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -108,23 +119,43 @@
   font-size: 0.9rem;
 }
 
-/* 新增的 verification-result 樣式 */
+/* 關閉按鈕 */
+.close-btn {
+  position: absolute; /* 絕對定位 */
+  top: 10px; /* 距離頂部 10px */
+  right: 10px; /* 距離右側 10px */
+  background: none; /* 透明背景 */
+  border: none; /* 無邊框 */
+  font-family: "Arial Black", "Microsoft JhengHei", sans-serif; /* 設置黑體字 */
+  font-size: 24px;
+  color: black;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* 滑鼠懸停時的淡化效果 */
+.close-btn:hover {
+  opacity: 0.7;
+}
+
+
 .verification-result {
+  position: relative; /* 讓內部的 .close-btn 絕對定位 */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
-  margin-top: 2rem;
-  max-width: 600px;
-  width: 100%;
-  text-align: left;
+  padding: 2rem; /* 保持原本的 padding */
+  margin-top: 2rem; /* 保持原本的 margin-top */
+  max-width: 600px; /* 保持最大寬度，避免變得過大 */
+  width: 100%; /* 保持全寬度 */
+  text-align: left; /* 保持文字左對齊 */
 }
 
+
 .verification-result h3 {
-  color: #4285f4;
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  border-bottom: 2px solid #4285f4;
+  border-bottom: 2px solid;
   padding-bottom: 0.5rem;
 }
 

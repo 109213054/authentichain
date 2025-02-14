@@ -3,9 +3,7 @@ import { config } from 'dotenv';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import genPicRoutes from './genPic.js'; // 使用 ESM 模組導入
-import checkProductSerial from './genPic.js';
 import verifyPayment from './genPic.js';
-import storeCertificate from './genPic.js';
 
 // 初始化環境變數
 config();
@@ -25,11 +23,8 @@ app.get('/', (req, res) => {
 
 // 後端生成圖片
 app.use('/api', genPicRoutes);
-//檢查產品序號有無重複
-app.use('/api', checkProductSerial);
 //paymoney
 app.use('/api', verifyPayment);
-app.use('/api', storeCertificate);
 
 
 // 啟動服務

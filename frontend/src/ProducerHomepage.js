@@ -1,3 +1,4 @@
+/* global BigInt */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Web3 from 'web3';
@@ -6,6 +7,7 @@ import "./ProducerHomepage.css";
 const API_BASE_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 const ProducerHomepage = () => {
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [formData, setFormData] = useState({
     storeName: '',
     productName: '',
@@ -20,10 +22,7 @@ const ProducerHomepage = () => {
   const [address, setAddress] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const fee = 0.001;
-  
-  const ORACLE_ABI = [
-    "function getMaticPrice(string currency) external view returns (int256)"
-  ];
+  const ORACLE_ABI = ["function getMaticPrice(string currency) external view returns (int256)"];
   const ORACLE_ADDRESS = process.env.REACT_APP_ORACLE_ADDRESS; // MaticPriceOracle 合約地址
 
   const [maticUsd, setMaticUsd] = useState(0);
@@ -44,6 +43,7 @@ const ProducerHomepage = () => {
         setAddress(accounts[0]);  // 設定用戶地址
         setWeb3(new Web3(window.ethereum));  // 設定 Web3 物件
         setMessage("錢包已連接！");
+        setIsWalletConnected(true);
       } catch (error) {
           console.error("錢包連接失敗", error);
           setMessage("無法連接錢包，請重試！");
@@ -76,7 +76,6 @@ const ProducerHomepage = () => {
       for (const currency of currencies) {
           console.log(`Fetching MATIC/${currency} price...`);
           try {
-            console.log(`🔍 currency: ${currency}, type: ${typeof currency}`);
             
             const price=await oracle.getMaticPrice(currency);
               
@@ -88,11 +87,10 @@ const ProducerHomepage = () => {
               const formattedPrice = Number(ethers.formatUnits(price, 8));
               exchangeRates[currency] = formattedPrice;
           } catch (error) {
-              console.error(`⚠️ 獲取 MATIC/${currency} 失敗:`, error);
+              console.error(`獲取 MATIC/${currency} 失敗:`, error);
           }
       }
 
-      console.log("🔍 匯率數據:", exchangeRates);
 
       // 確保存入的數據是數字類型
       setMaticUsd(exchangeRates["USD"] || 0);
@@ -115,54 +113,31 @@ const ProducerHomepage = () => {
     }
     
     const balance = await web3.eth.getBalance(address);
-    //if (web3.utils.fromWei(balance, 'ether') < fee) {
     if (Number(ethers.formatUnits(balance, 18)) < fee) {
-      setMessage('MATIC 餘額不足，請充值後再試');
+      setMessage('MATIC 餘額不足，請加值後再試');
       return;
     }
-
 
     try {
 
         setMessage('正在檢查產品序號...');
-        
-        const searchResponse = await axios.post(`${API_BASE_URL}/api/check-product-serial`, {
-            productSerial: formData.productSerial
-        });
-  
-        if (!searchResponse.data.success) {
-            setMessage(searchResponse.data.message);
-            return;
-        }
-
-        const contractAddress = process.env.REACT_APP_PAYMONEY_ADDRESS; //付款合約
-        if (!contractAddress) {
-          setMessage('合約地址未設定，請聯繫開發人員！');
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const SearchABI = [{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"getCertificate","outputs":[{"internalType":"bool","name":"","type":"bool"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_certificateHash","type":"string"},{"internalType":"bytes","name":"_certificateSignature","type":"bytes"}],"name":"addCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_newStatus","type":"string"}],"name":"updateCertificateStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+        const contract = new ethers.Contract(process.env.REACT_APP_CERTIFICATE_ADDRESS, SearchABI, provider);
+        const result = await contract.getCertificate(formData.productSerial);
+        if (BigInt(result[4]) === BigInt(formData.productSerial)) {
+          setMessage('該產品序號已存在，請使用其他序號！');
           return;
         }
   
-        const abi =[
-          {"inputs": [],"stateMutability": "nonpayable","type": "constructor"},
-          {"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "sender","type": "address"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "PaymentReceived","type": "event"},
-          {"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "Withdraw","type": "event"},
-          {"inputs": [],"name": "fee","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},
-          {"inputs": [],"name": "owner","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},
-          {"inputs": [],"name": "pay","outputs": [],"stateMutability": "payable","type": "function"},
-          {"inputs": [],"name": "withdraw","outputs": [],"stateMutability": "nonpayable","type": "function"},
-          {"stateMutability": "payable","type": "receive"}
-        ];
-        const provider = new ethers.BrowserProvider(window.ethereum);
+
+        const PAY_ABI =[{"inputs": [],"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "sender","type": "address"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "PaymentReceived","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "Withdraw","type": "event"},{"inputs": [],"name": "fee","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "owner","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "pay","outputs": [],"stateMutability": "payable","type": "function"},{"inputs": [],"name": "withdraw","outputs": [],"stateMutability": "nonpayable","type": "function"},{"stateMutability": "payable","type": "receive"}];
         const signer = await provider.getSigner();
-        const contract = new ethers.Contract(process.env.REACT_APP_PAYMONEY_ADDRESS, abi, signer);
-        
-        
-  
-  
-        //  1. 發送支付交易
+        const PAYMONEY_CONTRACT = new ethers.Contract(process.env.REACT_APP_PAYMONEY_ADDRESS, PAY_ABI, signer);
+
         setMessage('正在處理付款...');
-        const tx = await contract.pay({ value: ethers.parseEther("0.001") });
+        const tx = await PAYMONEY_CONTRACT.pay({ value: ethers.parseEther("0.001") });
         await tx.wait(); // 等待交易確認
-        setMessage(`交易成功！交易哈希: ${tx.hash}`);
   
         //  2. 發送交易哈希給後端進行驗證
         setMessage('正在驗證交易...');
@@ -177,13 +152,10 @@ const ProducerHomepage = () => {
         }
 
         setMessage('交易驗證成功，正在生成證書...');
-  
         // 傳遞到後端
         const response = await axios.post(`${API_BASE_URL}/api/generate-certificate`, {
           ...formData,
-          //signature,
-          //transactionHash: tx.hash, //交易哈希
-          userAddress: address, //新增使用者地址
+          userAddress: address,
         });
 
         if (!response.data.ipfsCID) {
@@ -192,38 +164,47 @@ const ProducerHomepage = () => {
         }
 
         const ipfsCID = response.data.ipfsCID;
-        console.log("✅ IPFS CID:", ipfsCID);
+        console.log("IPFS CID:", ipfsCID);
+        
 
         // 生成 Hash
         const hashData = `${formData.storeName}|${formData.productName}|${formData.productDescription}|${formData.productSerial}|${formData.productionDate}|${ipfsCID}`;
-        //const hash = keccak256(toUtf8Bytes(hashData));
         const hash = ethers.hashMessage(hashData);
         console.log("生成的 Hash值:", hash);
 
         // 🟢 用戶簽名
-        setMessage('請使用 MetaMask 簽署證書...');
+        setMessage('請使用 MetaMask 簽署原始資料及CID的雜湊值');
         const signature = await signer.signMessage(hash);
-        console.log("✅ 用戶簽名:", signature);
 
-        setMessage('正在將證書存入區塊鏈...');
+        setMessage('準備存入區塊鍊...');
+        
+        const productionDateTimestamp = Math.floor(new Date(formData.productionDate).getTime() / 1000);
+        console.log("轉換 productionDate:", formData.productionDate, "➡", productionDateTimestamp);
+        const status = "success";
 
-        const storeResponse = await axios.post(`${API_BASE_URL}/api/store-certificate`, {
-          ...formData,
+        // 智能合約地址和 ABI
+        const Cert_abi = [{"inputs":[{"internalType":"string","name":"_storeName","type":"string"},{"internalType":"string","name":"_productName","type":"string"},{"internalType":"string","name":"_productDescription","type":"string"},{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_ipfsCID","type":"string"},{"internalType":"uint256","name":"_productionDate","type":"uint256"},{"internalType":"string","name":"_status","type":"string"},{"internalType":"bytes32","name":"_certificateHash","type":"bytes32"},{"internalType":"bytes","name":"_certificateSignature","type":"bytes"}],"name":"addCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_newStatus","type":"string"}],"name":"updateCertificateStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"getCertificate","outputs":[{"internalType":"bool","name":"","type":"bool"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
+        const CertcontractAddress = process.env.REACT_APP_CERTIFICATE_ADDRESS;
+        const Certcontract = new ethers.Contract(CertcontractAddress, Cert_abi, signer);
+  
+        //存入區塊鏈
+        const data = await Certcontract.addCertificate(
+          formData.storeName,
+          formData.productName,
+          formData.productDescription,
+          formData.productSerial,
           ipfsCID,
+          productionDateTimestamp,
+          status,
           hash,
           signature,
-          userAddress: address,
+        );
+        setMessage('正在存入區塊鍊，請稍後...');
+        await data.wait(); // 等待交易完成
+        const blockchainTransactionHash = data.hash;
+        setMessage('證書生成完成!blockchainTransactionHash:',blockchainTransactionHash);
+        setLink(`證書連結: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
 
-      });
-
-      setLink(`證書存入區塊鏈成功！證書連結: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
-
-      console.log(storeResponse.data);
-      console.log(storeResponse.data.transactionHash);
-  
-        if (!storeResponse.data.success) {
-          setMessage('證書存入區塊鏈失敗');
-        }
     } catch (error) {
       console.error('失敗', error);
       setMessage('失敗了');
@@ -234,45 +215,62 @@ const ProducerHomepage = () => {
 
 return (
   <div className="producer-homepage">  {/* ✅ 主容器 */}
-    
-      {/* 連接錢包按鈕 */}
-      <button onClick={connectWallet} className="connect-wallet">連接錢包</button>
-
-      {address && <p>已連接地址: {address}</p>}
-      {/* MATIC 匯率資訊 */}
-      <h2 className="matic-info">📈 MATIC 匯率資訊</h2>
-          <p>每次生成證書需支付 0.001 MATIC</p>
-          {maticUsd !== null ? <p>💰 MATIC/USD: {maticUsd.toFixed(4)} USD</p> : <p>⏳ 加載 MATIC/USD 匯率...</p>}
-          {maticJpy !== null ? <p>💴 MATIC/JPY: {maticJpy.toFixed(4)} JPY</p> : <p>⏳ 加載 MATIC/JPY 匯率...</p>}
-          {maticGbp !== null ? <p>💷 MATIC/GBP: {maticGbp.toFixed(4)} GBP</p> : <p>⏳ 加載 MATIC/GBP 匯率...</p>}
-
-          {/* 表單 */}
-          <form onSubmit={handleSubmit}>
-              <label>店家名稱:</label>
-              <input id="storeName" name="storeName" className="input-field" value={formData.storeName} onChange={handleChange} required />
-
-              <label>產品名稱:</label>
-              <input id="productName" name="productName" className="input-field" value={formData.productName} onChange={handleChange} required />
-
-              <label>產品描述:</label>
-              <textarea id="productDescription" name="productDescription" className="input-field" value={formData.productDescription} onChange={handleChange} required />
-
-              <label>產品序號:</label>
-              <input id="productSerial" name="productSerial" className="input-field" value={formData.productSerial} onChange={handleChange} required />
-
-              <label>生產日期:</label>
-              <input id="productionDate" name="productionDate" type="date" className="input-field" value={formData.productionDate} onChange={handleChange} required />
-
-              {/* 付款按鈕 */}
-              <button type="submit" className="submit-btn">支付 0.001 MATIC 並生成證書</button>
-          </form>
-
-          {/* 顯示訊息 */}
-          {message && <p className="message">{message}</p>}
-
-          {/* 證書連結 */}
-          <div dangerouslySetInnerHTML={{ __html: link }} className="certificate-link" />
+      <h2 className="matic-info">目前匯率</h2>
+      <div className="matic-rates">
+          <div className="matic-card">
+              <p className="matic-card-title">MATIC/USD</p>
+              <p className="matic-card-value">{maticUsd !== null ? maticUsd.toFixed(4) : "⏳ 加載中..."}</p>
+              <p className="matic-card-currency">USD</p>
+          </div>
+          <div className="matic-card">
+              <p className="matic-card-title">MATIC/JPY</p>
+              <p className="matic-card-value">{maticJpy !== null ? maticJpy.toFixed(4) : "⏳ 加載中..."}</p>
+              <p className="matic-card-currency">JPY</p>
+          </div>
+          <div className="matic-card">
+              <p className="matic-card-title">MATIC/GBP</p>
+              <p className="matic-card-value">{maticGbp !== null ? maticGbp.toFixed(4) : "⏳ 加載中..."}</p>
+              <p className="matic-card-currency">GBP</p>
+          </div>
       </div>
+
+      <div className={`wallet-button-container ${isWalletConnected ? "hide" : "show"}`}>
+          <button onClick={connectWallet} className="connect-wallet">連接metamask錢包</button>
+      </div>
+      {address && <p className="wallet-address">錢包地址: {address}</p>}
+      <form onSubmit={handleSubmit}>
+      <div className="form-group">
+          <label htmlFor="storeName">店家名稱:</label>
+          <input id="storeName" name="storeName" className="input-field" value={formData.storeName} onChange={handleChange} required />
+      </div>
+
+      <div className="form-group">
+          <label htmlFor="productName">產品名稱:</label>
+          <input id="productName" name="productName" className="input-field" value={formData.productName} onChange={handleChange} required />
+      </div>
+
+      <div className="form-group">
+          <label htmlFor="productDescription">產品描述:</label>
+          <textarea id="productDescription" name="productDescription" className="input-field" value={formData.productDescription} onChange={handleChange} required />
+      </div>
+
+      <div className="form-group">
+          <label htmlFor="productSerial">產品序號:</label>
+          <input id="productSerial" name="productSerial" className="input-field" value={formData.productSerial} onChange={handleChange} required />
+      </div>
+
+      <div className="form-group">
+          <label htmlFor="productionDate">生產日期:</label>
+          <input id="productionDate" name="productionDate" type="date" className="input-field" value={formData.productionDate} onChange={handleChange} required />
+      </div>
+      <div className="button-container">
+          <button type="submit" className="submit-btn">支付 0.001 MATIC 並生成證書</button>
+      </div>
+
+      </form>
+      
+      {message && <p className="message">{message}</p>}
+      <div dangerouslySetInnerHTML={{ __html: link }} className="certificate-link" /></div>
 );
 };
 

@@ -23,40 +23,145 @@ body {
     margin-bottom: 20px;
 }
 
-/* MATIC 匯率資訊 */
+/* MATIC 匯率資訊標題 */
 .matic-info {
     text-align: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
-    color: #555;
-    margin-bottom: 10px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* MATIC 匯率資訊卡片樣式 */
+.matic-rates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+/* 單個匯率卡片 */
+.matic-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* 滑鼠懸停時的動態效果 */
+.matic-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 匯率標題 */
+.matic-card-title {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+/* 匯率數值 */
+.matic-card-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 貨幣標籤 */
+.matic-card-currency {
+    font-size: 14px;
+    color: #888;
+    margin-top: 5px;
+}
+
+
+.matic-rates p {
+    margin: 0;
+}
+
+.wallet-button-container {
+    display: flex;
+    justify-content: center;
+}
+.wallet-button-container.show {
+    display: block;
+}
+.wallet-button-container.hide {
+    display: none;
 }
 
 /* 錢包連接按鈕 */
 .connect-wallet {
-    display: block;
-    width: 100%;
-    padding: 12px;
     background-color: #007bff;
     color: white;
+    font-size: 16px;
+    padding: 12px 24px;
     border: none;
     border-radius: 5px;
-    font-size: 16px;
     cursor: pointer;
-    margin-bottom: 15px;
-    text-align: center;
+    transition: background 0.3s;
+    width: auto;
 }
 
 .connect-wallet:hover {
     background-color: #0056b3;
 }
 
+.wallet-address {
+    color: gray;
+    font-size: 14px;
+}
+
+
 /* 表單容器 */
 form {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 20px;
 }
+
+/* label 和 input 在同一排 */
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* 設定 label 固定寬度，避免長度不一致 */
+.form-group label {
+    width: 120px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 讓 input 佔滿剩餘空間 */
+.form-group input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+/* 讓 textarea 佔滿剩餘空間 */
+.form-group textarea {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
 
 /* 輸入框與文本框 */
 input, textarea {
@@ -73,27 +178,35 @@ input:focus, textarea:focus {
     outline: none;
 }
 
+/* 讓按鈕置中對齊 */
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
 /* 提交按鈕 */
 .submit-btn {
-    background-color: #28a745;
+    background-color: black;
     color: white;
     font-size: 18px;
-    padding: 12px;
+    padding: 12px 24px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s;
+    width: auto;
 }
 
 .submit-btn:hover {
-    background-color: #218838;
+    background-color: #007bff;
 }
 
 /* 訊息區塊 */
 .message {
     text-align: center;
     font-size: 16px;
-    color: #dc3545;
+    font-weight:bold;
     margin-top: 15px;
 }
 
