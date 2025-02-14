@@ -140,15 +140,16 @@
 
 
 .verification-result {
-  position: relative; /* 讓內部的 .close-btn 絕對定位 */
+  position: relative;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 2rem; /* 保持原本的 padding */
-  margin-top: 2rem; /* 保持原本的 margin-top */
-  max-width: 600px; /* 保持最大寬度，避免變得過大 */
-  width: 100%; /* 保持全寬度 */
+  padding: 2rem;
+  margin-top: 2rem;
+  max-width: 600px;
+  width: 100%;
   text-align: left; /* 保持文字左對齊 */
+  padding-top: 20px;
 }
 
 

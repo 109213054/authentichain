@@ -8,7 +8,7 @@ async function main() {
     console.log("Deploying contract with the account:", deployer.address);
 
     // 部署合約
-    const MaticPriceOracle = await ethers.getContractFactory("MaticPriceOracle");
+    const MaticPriceOracle = await ethers.getContractFactory("MaticRateOracle");
     const oracle = await MaticPriceOracle.deploy();
 
     await oracle.waitForDeployment();

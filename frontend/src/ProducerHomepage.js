@@ -125,7 +125,7 @@ const ProducerHomepage = () => {
         const SearchABI = [{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"getCertificate","outputs":[{"internalType":"bool","name":"","type":"bool"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_certificateHash","type":"string"},{"internalType":"bytes","name":"_certificateSignature","type":"bytes"}],"name":"addCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_newStatus","type":"string"}],"name":"updateCertificateStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"}];
         const contract = new ethers.Contract(process.env.REACT_APP_CERTIFICATE_ADDRESS, SearchABI, provider);
         const result = await contract.getCertificate(formData.productSerial);
-        if (BigInt(result[4]) === BigInt(formData.productSerial)) {
+        if (result[4]=== formData.productSerial) {
           setMessage('該產品序號已存在，請使用其他序號！');
           return;
         }
@@ -201,10 +201,8 @@ const ProducerHomepage = () => {
         );
         setMessage('正在存入區塊鍊，請稍後...');
         await data.wait(); // 等待交易完成
-        const blockchainTransactionHash = data.hash;
-        setMessage('證書生成完成!blockchainTransactionHash:',blockchainTransactionHash);
-        setLink(`證書連結: <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊這裡查看</a>`);
-
+        setMessage('證書生成完成!');
+        setLink(`您的證書 :  <a href="https://yellow-cheerful-herring-173.mypinata.cloud/ipfs/${ipfsCID}" target="_blank">點擊此處查看</a>`);
     } catch (error) {
       console.error('失敗', error);
       setMessage('失敗了');

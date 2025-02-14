@@ -179,7 +179,6 @@ function App() {
                   {errorMessage && <p className="error-message">{errorMessage}</p>}
                   {searchResult && (
                     <div className="verification-result">
-                    <button className="close-btn">&times;</button>
                     <h3>查詢結果</h3>
                       <p><strong>店家:</strong> {searchResult.storeName}</p>
                       <p><strong>產品名稱:</strong> {searchResult.productName}</p>

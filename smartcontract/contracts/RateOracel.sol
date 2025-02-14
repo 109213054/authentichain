@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract MaticPriceOracle {
+contract MaticRateOracle {
     struct PriceFeed {
         string currency;//貨幣的名稱
         AggregatorV3Interface priceFeed;//對應的 Chainlink 預言機地址
