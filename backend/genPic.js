@@ -16,47 +16,140 @@ registerFont('./fonts/NotoSansTC-Regular.ttf', { family: 'Noto Sans TC' });
 // 初始化 ethers.js 提供者（連接 Polygon 區塊鏈）
 const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
 
-
-// 圖片生成函數
 async function generateCertificateImage(data) {
   const canvas = createCanvas(800, 600);
   const ctx = canvas.getContext('2d');
 
-  const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+  drawBackground(ctx, canvas.width, canvas.height);
+  drawBorder(ctx, canvas.width, canvas.height);
+  drawTitle(ctx, canvas.width);
+  drawContent(ctx, data);
+  drawStamp(ctx, canvas.width, canvas.height);
+
+  return canvas.toBuffer('image/png');
+}
+
+function drawBackground(ctx, width, height) {
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
   gradient.addColorStop(0, 'white');
   gradient.addColorStop(0.35, '#E6F3FF');
   gradient.addColorStop(0.85, '#B3D9FF');
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, width, height);
+}
 
+function drawBorder(ctx, width, height) {
   ctx.strokeStyle = '#4A90E2';
   ctx.lineWidth = 10;
-  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+  ctx.strokeRect(10, 10, width - 20, height - 20);
+}
 
+function drawTitle(ctx, width) {
   ctx.font = 'bold 40px "Noto Sans TC"';
   ctx.fillStyle = '#2C3E50';
   ctx.textAlign = 'center';
-  ctx.fillText('產品認證證書', canvas.width / 2, 80);
+  ctx.fillText('產品認證證書', width / 2, 80);
+}
+
+function drawContent(ctx, data) {
+  const leftMargin = 120; // 增加左邊距
+  const contentStartY = 150;
+  const lineHeight = 45;
+  const labelWidth = 100;
+  const maxWidth = 560; // 調整最大寬度以適應新的左邊距
 
   ctx.font = '20px "Noto Sans TC"';
   ctx.fillStyle = '#34495E';
-  ctx.textAlign = 'center';
-  const startY = 150;
-  const lineHeight = 40;
+  ctx.textAlign = 'left';
 
-  const lines = [
-    `店家名稱: ${data.storeName}`,
-    `產品名稱: ${data.productName}`,
-    `產品描述: ${data.productDescription}`,
-    `產品序號: ${data.productSerial}`,
-    `生產日期: ${data.productionDate}`,
+  let currentY = contentStartY;
+
+  const fields = [
+    { label: '店家名稱:', value: data.storeName },
+    { label: '產品名稱:', value: data.productName },
+    { label: '產品描述:', value: data.productDescription, multiline: true },
+    { label: '產品序號:', value: data.productSerial },
+    { label: '生產日期:', value: data.productionDate }
   ];
 
-  lines.forEach((line, index) => {
-    ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
+  fields.forEach(field => {
+    ctx.fillText(field.label, leftMargin, currentY);
+    if (field.multiline) {
+      currentY = wrapText(ctx, field.value, leftMargin + labelWidth, currentY, maxWidth - labelWidth, lineHeight);
+    } else {
+      ctx.fillText(field.value, leftMargin + labelWidth, currentY);
+    }
+    currentY += lineHeight;
   });
+}
 
-  return canvas.toBuffer('image/png');
+function drawStamp(ctx, width, height) {
+  const stampX = width - 150;
+  const stampY = height - 150;
+  const stampRadius = 60;
+  const innerRadius = stampRadius - 25;
+
+  ctx.globalAlpha = 0.8;
+  ctx.strokeStyle = '#FF0000';
+  ctx.fillStyle = '#FF0000';
+
+  // 外圈
+  ctx.beginPath();
+  ctx.arc(stampX, stampY, stampRadius, 0, Math.PI * 2);
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 內圈
+  ctx.beginPath();
+  ctx.arc(stampX, stampY, innerRadius, 0, Math.PI * 2);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 外圈文字 (AUTHENTICHAIN)
+  ctx.font = '16px "Noto Sans TC"';
+  ctx.textAlign = 'center';
+  const text = 'AUTHENTICHAIN';
+  for (let i = 0; i < text.length; i++) {
+    ctx.save();
+    ctx.translate(stampX, stampY);
+    ctx.rotate(i * (Math.PI * 2 / text.length) - Math.PI / 2);
+    ctx.fillText(text[i], 0, -stampRadius + 20);
+    ctx.restore();
+  }
+
+  // 畫一個簡單的區塊鏈圖案
+  ctx.beginPath();
+  ctx.moveTo(stampX - 20, stampY);
+  ctx.lineTo(stampX + 20, stampY);
+  ctx.moveTo(stampX - 10, stampY + 15);
+  ctx.lineTo(stampX + 10, stampY + 15);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const characters = text.split('');
+  let line = '';
+  let currentY = y;
+
+  for (let i = 0; i < characters.length; i++) {
+    const testLine = line + characters[i];
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
+
+    if (testWidth > maxWidth) {
+      ctx.fillText(line, x, currentY);
+      line = characters[i];
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+
+  return currentY;
 }
 
 // 定義路由

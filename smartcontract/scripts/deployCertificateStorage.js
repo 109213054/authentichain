@@ -1,10 +1,10 @@
 const hre = require("hardhat");
 
 async function main() {
-    console.log("📢 正在部署 CertificateFunction 合約...");
+    console.log("📢 正在部署 SearchAndVerifyCert 合約...");
 
-    // 取得合約工廠
-    const CertificateFunction = await hre.ethers.getContractFactory("CertificateFunction");
+    //合約名稱
+    const CertificateFunction = await hre.ethers.getContractFactory("SearchAndVerifyCert");
 
     // 部署合約
     const contract = await CertificateFunction.deploy();

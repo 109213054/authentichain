@@ -121,11 +121,14 @@ const ProducerHomepage = () => {
     try {
 
         setMessage('正在檢查產品序號...');
+        console.log('正在檢查產品序號...');
         const provider = new ethers.BrowserProvider(window.ethereum);
         const SearchABI = [{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"getCertificate","outputs":[{"internalType":"bool","name":"","type":"bool"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_certificateHash","type":"string"},{"internalType":"bytes","name":"_certificateSignature","type":"bytes"}],"name":"addCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_newStatus","type":"string"}],"name":"updateCertificateStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"}];
         const contract = new ethers.Contract(process.env.REACT_APP_CERTIFICATE_ADDRESS, SearchABI, provider);
         const result = await contract.getCertificate(formData.productSerial);
-        if (result[4]=== formData.productSerial) {
+        console.log(result);
+        console.log(result[0]);
+        if (result[0]) {
           setMessage('該產品序號已存在，請使用其他序號！');
           return;
         }

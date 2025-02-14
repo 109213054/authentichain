@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract PaymentReceiver {
     address public owner;
-    uint256 public constant fee = 0.001 ether; // 🟢 手續費設定為 0.001 MATIC
+    uint256 public constant fee = 0.001 ether; //手續費設定為 0.001 MATIC
 
     event PaymentReceived(address indexed sender, uint256 amount);
     event Withdraw(address indexed owner, uint256 amount);
@@ -17,14 +17,14 @@ contract PaymentReceiver {
         owner = msg.sender;
     }
 
-    // 🟢 接收付款的函數
+    //接收付款的函數
     function pay() external payable {
         require(msg.value >= fee, "Insufficient MATIC sent");
 
         emit PaymentReceived(msg.sender, msg.value);
     }
 
-    // 🟢 提領合約內的 MATIC
+    //提領合約內的 MATIC
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No MATIC available for withdrawal");
@@ -35,7 +35,7 @@ contract PaymentReceiver {
         emit Withdraw(owner, balance);
     }
 
-    // 🟢 允許合約接收 MATIC
+    //允許合約接收 MATIC
     receive() external payable {
         emit PaymentReceived(msg.sender, msg.value);
     }
