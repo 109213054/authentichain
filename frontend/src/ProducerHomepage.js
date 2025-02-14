@@ -3,6 +3,7 @@ import axios from 'axios';
 import Web3 from 'web3';
 import { ethers } from "ethers";
 import "./ProducerHomepage.css";
+const API_BASE_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 const ProducerHomepage = () => {
   const [formData, setFormData] = useState({
@@ -125,7 +126,7 @@ const ProducerHomepage = () => {
 
         setMessage('正在檢查產品序號...');
         
-        const searchResponse = await axios.post('http://localhost:5000/api/check-product-serial', {
+        const searchResponse = await axios.post(`${API_BASE_URL}/api/check-product-serial`, {
             productSerial: formData.productSerial
         });
   
@@ -165,7 +166,7 @@ const ProducerHomepage = () => {
   
         //  2. 發送交易哈希給後端進行驗證
         setMessage('正在驗證交易...');
-        const verifyResponse = await axios.post('http://localhost:5000/api/verify-payment', {
+        const verifyResponse = await axios.post(`${API_BASE_URL}/api/verify-payment`, {
             transactionHash: tx.hash,
             userAddress: address,
         });
@@ -178,7 +179,7 @@ const ProducerHomepage = () => {
         setMessage('交易驗證成功，正在生成證書...');
   
         // 傳遞到後端
-        const response = await axios.post('http://localhost:5000/api/generate-certificate', {
+        const response = await axios.post(`${API_BASE_URL}/api/generate-certificate`, {
           ...formData,
           //signature,
           //transactionHash: tx.hash, //交易哈希
@@ -206,7 +207,7 @@ const ProducerHomepage = () => {
 
         setMessage('正在將證書存入區塊鏈...');
 
-        const storeResponse = await axios.post('http://localhost:5000/api/store-certificate', {
+        const storeResponse = await axios.post(`${API_BASE_URL}/api/store-certificate`, {
           ...formData,
           ipfsCID,
           hash,
