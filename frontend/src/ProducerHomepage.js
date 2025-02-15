@@ -102,10 +102,29 @@ const ProducerHomepage = () => {
     }
   };
   
+  const checkAuthorization = async () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const CERTIFICATE_ABI= [{"inputs":[{"internalType":"address","name":"_storeOwner","type":"address"}],"name":"authorizeStoreOwner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_storeName","type":"string"},{"internalType":"string","name":"_productName","type":"string"},{"internalType":"string","name":"_productDescription","type":"string"},{"internalType":"string","name":"_productSerial","type":"string"},{"internalType":"string","name":"_ipfsCID","type":"string"},{"internalType":"uint256","name":"_productionDate","type":"uint256"},{"internalType":"string","name":"_status","type":"string"},{"internalType":"bytes32","name":"_certificateHash","type":"bytes32"},{"internalType":"bytes","name":"_certificateSignature","type":"bytes"}],"name":"addCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_productSerial","type":"string"}],"name":"getCertificate","outputs":[{"internalType":"bool","name":"","type":"bool"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"storeOwners","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}];
+      const contract = new ethers.Contract(process.env.REACT_APP_CERTIFICATE_ADDRESS, CERTIFICATE_ABI, provider);
+      const isAuthorized = await contract.storeOwners(address);
+      return isAuthorized;
+    } catch (error) {
+      console.error("授權檢查失敗", error);
+      return false;
+    }
+  };
 
   // 提交表單，進行簽名並提交至後端
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setMessage('正在驗證店家...');
+    const isAuthorized = await checkAuthorization();
+    if (!isAuthorized) {
+      setMessage('很抱歉，你沒有權限生成證書');
+      return;
+    }
 
     if (!web3 || !address) {
       setMessage('請先連接錢包！');
