@@ -52,7 +52,8 @@ const ProducerHomepage = () => {
     if (window.ethereum && window.ethereum.isMetaMask) {
       try {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        setAddress(accounts[0]);  // 設定用戶地址
+        const selectedAddress = window.ethereum.selectedAddress || accounts[0];
+        setAddress(selectedAddress);  // 設定用戶地址
         setWeb3(new Web3(window.ethereum));  // 設定 Web3 物件
         setMessage("錢包已連接！");
         setIsWalletConnected(true);
