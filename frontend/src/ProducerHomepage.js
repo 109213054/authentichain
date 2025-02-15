@@ -30,6 +30,18 @@ const ProducerHomepage = () => {
   const [maticGbp, setMaticGbp] = useState(0);
 
   useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (accounts.length > 0) {
+          console.log(accounts);
+          console.log(accounts[0]);
+          setAddress(accounts[0]);
+        } else {
+          setAddress(""); // 如果沒有帳戶，清除地址
+          setIsWalletConnected(false);
+        }
+      });
+    }
     fetchExchangeRates();
     const interval = setInterval(fetchExchangeRates, 5000); // 每5秒更新匯率
     return () => clearInterval(interval);
