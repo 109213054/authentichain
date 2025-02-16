@@ -80,8 +80,8 @@ const ProducerHomepage = () => {
       if (!window.ethereum) throw new Error("請連接 MetaMask");
 
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, signer);
+      //const signer = await provider.getSigner();
+      const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, provider);
 
       const currencies = ["USD", "JPY", "GBP"];
       const exchangeRates = {};
